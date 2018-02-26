@@ -1,0 +1,25 @@
+const int bli := 5
+const int bla := 7
+const bool blu := true
+virtual int poo := bla + blub
+
+node A {
+	input int blub
+	output int foo := poo * blub
+}
+
+node B {
+	output bool moo := if poo[1, true] {poo} else {moo [-1, false]}
+	trigger moo
+}
+
+node C {
+	output bool joo := foo = poo[-2, 1]
+	output bool roo := bli | joo[-1, false]
+	trigger joo, roo
+}
+
+channel chan_AB 1 1 A B
+channel chan_AC 1 3 A C
+dchannel chan_AC2 3 1 A C
+dchannel chan_CA 1 C A
