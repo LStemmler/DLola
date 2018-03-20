@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.tree.Trees;
 import org.graphstream.graph.Edge;
 
 import main.DLolaRunner;
+import main.Debug;
+import main.Global;
 import semanticAnalysis.SymbolTable;
 public class Channel extends DLolaObject {
 
@@ -24,13 +26,13 @@ public class Channel extends DLolaObject {
 
 		super(channelDef, symbolTable);
 		
-		if (Trees.getNodeText(channelDef.getChild(0), DLolaRunner.ruleNames).equals("dchannel")) {
+		if (Trees.getNodeText(channelDef.getChild(0), Global.ruleNames).equals("dchannel")) {
 			directed = true;
 		}
 		
 		//Bandwidth attribute present?
 		int i=2;
-		if (Trees.getNodeText(channelDef.getChild(3), DLolaRunner.ruleNames).equals("integer")) {
+		if (Trees.getNodeText(channelDef.getChild(3), Global.ruleNames).equals("integer")) {
 			//yes
 			bandwidth = Integer.parseInt(channelDef.getChild(i++).getChild(0).getText());
 		} else {
@@ -40,9 +42,10 @@ public class Channel extends DLolaObject {
 		A = (Node) symbolTable.getObject(channelDef.getChild(i++).getChild(0).getText());
 		B = (Node) symbolTable.getObject(channelDef.getChild(i++).getChild(0).getText());
 		
-		ensure(A != null && B != null, "Channel between nonexisting nodes");
+		Debug.ensure(A != null && B != null, "Channel between nonexisting nodes");
 
-		channel = DLolaRunner.systemModel.getNetworkGraph().addEdge(identifier, A.getIdentifier(), B.getIdentifier(), directed);
+		channel = Global.systemModel.getNetworkGraph().addEdge(identifier, A.getIdentifier(), B.getIdentifier(), directed);
+		channel.setAttribute("Channel", this);
 	}
 
 

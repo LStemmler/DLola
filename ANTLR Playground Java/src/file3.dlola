@@ -1,25 +1,30 @@
 const int bli := 5
-const int bla := 7
-const bool blu := true
+const bool boo := true
 virtual int poo := bla + blub
 
 node A {
 	input int blub
 	output int foo := poo * blub
+	output int b_out := b
 }
 
 node B {
-	output bool moo := if poo[1, true] {poo} else {moo [-1, false]}
+	input int bla
+	output bool moo := if boo[1, true] {a} else {moo [-1, false]}
 	trigger moo
 }
 
 node C {
-	output bool joo := foo = poo[-2, 1]
+	input int b
+	input bool a, c, d
+	output int e := if c<->d {f} else {1}
+	output bool joo := (foo =  bla[-2, 1] + b )
 	output bool roo := bli | joo[-1, false]
+	output int f := if a {6} else {0}
 	trigger joo, roo
 }
 
-channel chan_AB 1 1 A B
+channel chan_AB 5 1 A B
 channel chan_AC 1 3 A C
 dchannel chan_AC2 3 1 A C
-dchannel chan_CA 1 C A
+dchannel chan_CA 5 1 C A

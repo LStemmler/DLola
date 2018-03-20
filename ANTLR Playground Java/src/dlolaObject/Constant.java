@@ -4,7 +4,7 @@ import java.text.ParseException;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import semanticAnalysis.DLolaType;
+import dlolaExprTree.DLolaType;
 import semanticAnalysis.SymbolTable;
 
 public class Constant extends DLolaExpTreeObject {

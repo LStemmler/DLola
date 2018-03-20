@@ -1,5 +1,5 @@
 /**
- * Define a grammar called DLola
+ * Define the DLola grammar
  */
  
 grammar DLola;
@@ -43,19 +43,19 @@ literal : 'true' | 'false' | integer ;
 expression : LPAREN expression RPAREN | restrExpr | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr | negExpr | andExpr | orExpr | impExpr | equivExpr;
 
 
-equivExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr | negExpr | andExpr | orExpr | impExpr) (equivOp equivExpr)? ;
+equivExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr | andExpr | orExpr | impExpr) (equivOp equivExpr)? ;
 
-impExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr | negExpr | andExpr | orExpr) (impOp impExpr)? ;
+impExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr | andExpr | orExpr) (impOp impExpr)? ;
 
-orExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr | negExpr | andExpr) (orOp orExpr)?;
+orExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr | andExpr) (orOp orExpr)?;
 
-andExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr | negExpr) (andOp andExpr)? ;
+andExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr) (andOp andExpr)? ;
 
-negExpr : (negOp)? (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr) ;
+negExpr : (negOp)? (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr) ;
 
-equExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr | comparExpr) (equOp equExpr)? ;
+equExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr) (equOp addExpr)? ;
 
-comparExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr) (compOp comparExpr)? ;
+comparExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr) (compOp addExpr)? ;
 
 addExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | subExpr | multExpr | subExpr) (addOp addExpr)? ;
 
@@ -92,7 +92,7 @@ expOp :  '^' ;
 
 ifExpr : 'if' expression LBRACE expression RBRACE elseExpr ;
 
-elseExpr : ('elif' expression LBRACE expression RBRACE elseExpr)? 'else' LBRACE expression RBRACE ;
+elseExpr : 'elif' expression LBRACE expression RBRACE elseExpr | 'else' LBRACE expression RBRACE ;
 
 shiftExpr : identifier LBRACK integer COMMA (literal | identifier) RBRACK ;
 

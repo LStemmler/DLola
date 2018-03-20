@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.tree.Trees;
 
 import main.DLolaRunner;
 import main.Debug;
+import main.Global;
 import parser.DLolaParser;
 
 public class DefinitionList {
@@ -29,8 +30,7 @@ public class DefinitionList {
 	}
 	
 	public void findDefinitions(ParseTree tree) {
-		List<String> ruleNames = Arrays.asList(DLolaRunner.parser.getRuleNames());
-		String nodeType = Utils.escapeWhitespace(Trees.getNodeText(tree, ruleNames), false);
+		String nodeType = Utils.escapeWhitespace(Trees.getNodeText(tree, Global.ruleNames), false);
 
 		switch (nodeType) {
 		case "constantDef":

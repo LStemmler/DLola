@@ -5,27 +5,34 @@ import java.util.ArrayList;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import semanticAnalysis.DLolaType;
+import dlolaExprTree.DLolaExpr;
+import dlolaExprTree.DLolaType;
+import dlolaExprTree.ExprSection;
+import dlolaExprTree.ExpressionMap;
+import main.Debug;
+import main.Global;
 import semanticAnalysis.SymbolTable;
 
 public class Output extends DLolaExpTreeObject {
 
-	Node parentNode;
+	private Node parentNode;
 	ArrayList<Input> inputDependencies = new ArrayList<Input>();
 	Boolean trigger = false;
+	DLolaExpr expression;
+	ExprSection section;
 
 	public Output(ParseTree defnode, SymbolTable symbolTable) throws ParseException {
 		super(defnode, symbolTable);
 		String parentIdent = DLolaObject.getParentNodeIdentifier(defnode);
 		parentNode = (Node) symbolTable.getObject(parentIdent);
-		parentNode.addOutput(this);
+		getParentNode().addOutput(this);
 	}
 
 	public void addTrigger() throws ParseException {
-		ensure(type == DLolaType.BOOL, "Trigger on non-boolean output " + identifier);
-		ensure(!trigger, "Multiple triggers on output " + identifier);
+		Debug.ensure(type == DLolaType.BOOL, "Trigger on non-boolean output " + identifier);
+		Debug.ensure(!trigger, "Multiple triggers on output " + identifier);
 		this.trigger = true;
-		parentNode.triggerList.add(this);
+		getParentNode().triggerList.add(this);
 	}
 
 	public ArrayList<Input> getInputDependencies() {
@@ -52,6 +59,20 @@ public class Output extends DLolaExpTreeObject {
 			}
 		}
 		return changed;
+	}
+
+	public Node getParentNode() {
+		return parentNode;
+	}
+
+	public DLolaExpr getExpression() {
+		if (expression == null) expression = ExpressionMap.getExpression(expressionTree);
+		return expression;
+	}
+
+	public ExprSection getExprSection() {
+		if (section == null) section = ExpressionMap.getExprSection(ExpressionMap.getExpression(expressionTree));
+		return section;
 	}
 
 }

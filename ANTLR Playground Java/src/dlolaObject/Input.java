@@ -6,7 +6,8 @@ import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import semanticAnalysis.DLolaType;
+import dlolaExprTree.DLolaType;
+import main.Debug;
 import semanticAnalysis.SymbolTable;
 
 public class Input extends DLolaObject {
@@ -25,7 +26,7 @@ public class Input extends DLolaObject {
 
 	public void merge(ParseTree inputDef, SymbolTable symbolTable) throws ParseException {
 		DLolaType inputType = getType(inputDef);
-		ensure(inputType == type, "Differing types " + inputType + " and " + type + " for input " + identifier);
+		Debug.ensure(inputType == type, "Differing types " + inputType + " and " + type + " for input " + identifier);
 		String parentIdent = DLolaObject.getParentNodeIdentifier(inputDef);
 		Node parentNode = (Node) symbolTable.getObject(parentIdent);
 		nodeList.add(parentNode);

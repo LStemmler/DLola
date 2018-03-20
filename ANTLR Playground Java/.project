@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>ANTLR Playground Java</name>
+	<name>Bachelorprojekt</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -16,9 +16,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>dlolaAntlr</name>
+			<name>antlr4</name>
 			<type>2</type>
-			<location>C:/Users/blur/Eclipse_Workspace/ANTLR DLola Projekt/target/generated-sources/antlr4</location>
+			<location>C:/Users/blur/git/Bachelorprojekt/ANTLR DLola Projekt/target/generated-sources/antlr4</location>
 		</link>
 	</linkedResources>
 </projectDescription>

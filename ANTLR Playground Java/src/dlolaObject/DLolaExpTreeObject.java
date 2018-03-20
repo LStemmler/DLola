@@ -4,7 +4,9 @@ import java.text.ParseException;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import semanticAnalysis.DLolaType;
+import dlolaExprTree.DLolaExpr;
+import dlolaExprTree.DLolaType;
+import main.Debug;
 import semanticAnalysis.SymbolTable;
 
 public abstract class DLolaExpTreeObject extends DLolaObject {

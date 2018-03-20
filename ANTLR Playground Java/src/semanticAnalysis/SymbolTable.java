@@ -7,10 +7,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.graphstream.graph.Edge;
 
+import dlolaExprTree.DLolaExpr;
+import dlolaExprTree.DLolaType;
 import dlolaObject.*;
 import main.DLolaRunner;
 import main.Debug;
+import main.Global;
 
 public class SymbolTable {
 
@@ -18,7 +22,7 @@ public class SymbolTable {
 	List<Constant> constantList = new ArrayList<Constant>();
 	List<Virtual> virtualList = new ArrayList<Virtual>();
 	List<Input> inputList = new ArrayList<Input>();
-	List<Output> outputList = new ArrayList<Output>();
+	ArrayList<Output> outputList = new ArrayList<Output>();
 	List<Output> triggerList = new ArrayList<Output>();
 	List<Node> nodeList = new ArrayList<Node>();
 	List<Channel> channelList = new ArrayList<Channel>();
@@ -86,6 +90,9 @@ public class SymbolTable {
 				Debug.out(15, "Registered trigger on output "+output.getIdentifier());
 			}
 		}
+		
+		
+		
 	}
 
 	public DLolaObject getObject(String identifier) {
@@ -108,7 +115,7 @@ public class SymbolTable {
 		return inputList;
 	}
 
-	public List<Output> getOutputList() {
+	public ArrayList<Output> getOutputList() {
 		return outputList;
 	}
 
@@ -122,6 +129,28 @@ public class SymbolTable {
 
 	public List<Channel> getChannelList() {
 		return channelList;
+	}
+
+	public Node getNode(org.graphstream.graph.Node n) {
+		return n.getAttribute("Node");
+	}
+
+	public Channel getChannel(Edge e) {
+		return e.getAttribute("Channel");
+	}
+
+	public DLolaType getType(String identifier) throws UntypedException {
+		DLolaObject obj = this.getObject(identifier);
+		if (obj instanceof Input) {
+			return ((Input) obj).getType();
+		} else if (obj instanceof Output) {
+			return ((Output) obj).getType();
+		} else if (obj instanceof Virtual) {
+			return ((Virtual) obj).getType();
+		} else if (obj instanceof Constant) {
+			return ((Constant) obj).getType();
+		}
+		throw new UntypedException("getType on typeless Identifier");
 	}
 
 }
