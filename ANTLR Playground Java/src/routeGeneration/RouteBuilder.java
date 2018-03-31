@@ -112,7 +112,6 @@ public class RouteBuilder {
 	}
 
 	private boolean checkConstraints(PathTree attempt, Task t) {
-		// TODO Proper constraint checking
 		for (int i = 0; i < t.PathChannels.size(); i++) {
 			int requiredBandwidth = 0;
 			Channel c = t.PathChannels.get(i);

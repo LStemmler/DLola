@@ -180,7 +180,7 @@ public class Evaluator {
 	public void printEquivalenceClassDetails() {
 		String offset = "  ";
 		Debug.out(13, "Equivalence class details:");
-		for (int eclass = 1; eclass < equivalenceClasses.size(); eclass++) {
+		for (int eclass = 0; eclass < equivalenceClasses.size(); eclass++) {
 
 			Solution sol = equivalenceClasses.get(eclass).get(0);
 			Debug.out(13, offset + "Equivalence class " + eclass + ":");

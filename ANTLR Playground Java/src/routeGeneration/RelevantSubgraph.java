@@ -41,21 +41,27 @@ public final class RelevantSubgraph {
 	private void generateChannelTree() {
 		channelTree = new SingleGraph("CT " + targetNode.getIdentifier());
 
-		boolean[] visitedOnce = new boolean[Global.systemModel.getNetworkGraph().getNodeCount()];
-		boolean[] visitedTwice = new boolean[Global.systemModel.getNetworkGraph().getNodeCount()];
+		boolean[] visited = new boolean[Global.systemModel.getNetworkGraph().getNodeCount()];
+		boolean[] passed = new boolean[Global.symtable.getChannelList().size()];
 
-		target = calculateChannelTrees(targetNode, 0, visitedOnce, visitedTwice);
+		target = calculateChannelTrees(targetNode, 0, visited, passed);
 
 	}
 
-	private Node calculateChannelTrees(dlolaObject.Node node, int delay, boolean[] visitedOnce,
-			boolean[] visitedTwice) {
-		if (visitedTwice[node.getGraphNode().getIndex()]) {
-			// useless circle
-			return null;
+	private Node calculateChannelTrees(dlolaObject.Node node, int delay, boolean[] visited, boolean[] passed) {
+		
+		//TODO clean up, better relevant subgraphs after introducing multipoint channels
+		// calculateIndirectChannelTrees einbinden
+		// evtl bei calculateIndirectChannelTrees Optionen ohne reachable Inputs streichen
+		
+		
+
+		Node n = node.getGraphNode();
+		if (visited[n.getIndex()]) {
+			// becomes indirect
+			return calculateIndirectChannelTrees(node, delay, new boolean[visited.length], new boolean[passed.length]);
 		} else {
 			HashMap<Input, Integer> minDelay = new HashMap<>();
-			Node n = node.getGraphNode();
 			Node ownNode = null;
 			HashSet<Input> reachedInputs = new HashSet<>();
 
@@ -67,13 +73,7 @@ public final class RelevantSubgraph {
 				minDelay.put(in, delay);
 				reachedInputs.add(in);
 			}
-			if (visitedOnce[n.getIndex()] == true) {
-				// visiting twice is necessary for finding indirect path options, but not
-				// preferred
-				visitedTwice[n.getIndex()] = true;
-			} else {
-				visitedOnce[n.getIndex()] = true;
-			}
+			visited[n.getIndex()] = true;
 
 			for (Edge entering : n.getEachEnteringEdge()) {
 				Node fromNode;
@@ -85,9 +85,24 @@ public final class RelevantSubgraph {
 					fromNode = entering.getNode1();
 				}
 
+				Channel chan = Global.symtable.getChannel(entering);
+				int index = Global.symtable.getChannelList().indexOf(chan);
+				
+				boolean indirect = false;
+				if (passed[index]) {
+					indirect = true;
+				} else {
+					passed[index] = true;
+				}
+
 				int channelDelay = Global.symtable.getChannel(entering).getDelay();
-				Node prevTreeNode = calculateChannelTrees(Global.symtable.getNode(fromNode), delay + channelDelay,
-						visitedOnce, visitedTwice);
+				Node prevTreeNode;
+				if (!indirect) {
+					prevTreeNode = calculateChannelTrees(Global.symtable.getNode(fromNode), delay + channelDelay,
+							visited, passed);
+				} else {
+					prevTreeNode = calculateIndirectChannelTrees(node, delay, new boolean[visited.length], new boolean[passed.length]);
+				}
 
 				// relevant subgraph
 				if (prevTreeNode != null) {
@@ -104,7 +119,10 @@ public final class RelevantSubgraph {
 							true);
 					setEdgeIdentifier(pathEdge, entering.getId());
 					setEdgeChannel(pathEdge, Global.systemModel.getChannel(entering));
-					setIndirect(pathEdge, visitedOnce[fromNode.getIndex()]);
+					setIndirect(pathEdge, indirect);
+				}
+				if (!indirect) {
+					passed[index] = false;
 				}
 			}
 			if (ownNode != null) {
@@ -114,11 +132,79 @@ public final class RelevantSubgraph {
 				setCurDelay(ownNode, delay);
 				setReachableInputs(ownNode, reachedInputs);
 			}
-			if (visitedTwice[n.getIndex()]) {
-				visitedTwice[n.getIndex()] = false;
-			} else {
-				visitedOnce[n.getIndex()] = false;
+			visited[n.getIndex()] = false;
+			return ownNode;
+		}
+	}
+	
+	private Node calculateIndirectChannelTrees(dlolaObject.Node node, int delay, boolean[] visited, boolean[] passed) {
+		Node n = node.getGraphNode();
+		if (visited[n.getIndex()]) {
+			// useless circle
+			return null;
+		} else {
+			HashMap<Input, Integer> minDelay = new HashMap<>();
+			Node ownNode = null;
+			HashSet<Input> reachedInputs = new HashSet<>();
+
+			for (Input in : node.getInputList()) {
+				if (ownNode == null) {
+					ownNode = createNextIndexedNode(node);
+				}
+				setMinDelay(ownNode, in, delay);
+				minDelay.put(in, delay);
+				reachedInputs.add(in);
 			}
+			visited[n.getIndex()] = true;
+
+			for (Edge entering : n.getEachEnteringEdge()) {
+				Node fromNode;
+
+				// Necessary since undirected
+				if (entering.getNode1().equals(n)) {
+					fromNode = entering.getNode0();
+				} else {
+					fromNode = entering.getNode1();
+				}
+
+				Channel chan = Global.symtable.getChannel(entering);
+				int index = Global.symtable.getChannelList().indexOf(chan);
+				if (passed[index]) {
+					continue; //Already passed that (probably multinode) channel, no need to visit
+				}
+				passed[index] = true;
+
+				int channelDelay = chan.getDelay();
+				Node prevTreeNode = calculateIndirectChannelTrees(Global.symtable.getNode(fromNode), delay + channelDelay,
+						visited, passed);
+
+				// relevant subgraph
+				if (prevTreeNode != null) {
+					if (ownNode == null) {
+						ownNode = createNextIndexedNode(node);
+					}
+					for (Input in : getReachableInputs(prevTreeNode)) {
+						if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > getMinDelay(prevTreeNode, in)) {
+							minDelay.put(in, getMinDelay(prevTreeNode, in));
+						}
+						reachedInputs.add(in);
+					}
+					Edge pathEdge = channelTree.addEdge(createNextEdgeIndex(entering.getId()), prevTreeNode, ownNode,
+							true);
+					setEdgeIdentifier(pathEdge, entering.getId());
+					setEdgeChannel(pathEdge, Global.systemModel.getChannel(entering));
+					setIndirect(pathEdge, true);
+				}
+				passed[index] = false;
+			}
+			if (ownNode != null) {
+				for (Input in : minDelay.keySet()) {
+					setMinDelay(ownNode, in, minDelay.get(in));
+				}
+				setCurDelay(ownNode, delay);
+				setReachableInputs(ownNode, reachedInputs);
+			}
+			visited[n.getIndex()] = false;
 			return ownNode;
 		}
 	}

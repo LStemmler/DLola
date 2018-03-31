@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.Trees;
 
 import dlolaExprTree.DLolaExpr;
 import dlolaExprTree.DLolaType;
@@ -17,7 +18,8 @@ public class Output extends DLolaExpTreeObject {
 
 	private Node parentNode;
 	ArrayList<Input> inputDependencies = new ArrayList<Input>();
-	Boolean trigger = false;
+	boolean trigger = false;
+	boolean essential = true;
 	DLolaExpr expression;
 	ExprSection section;
 
@@ -26,6 +28,12 @@ public class Output extends DLolaExpTreeObject {
 		String parentIdent = DLolaObject.getParentNodeIdentifier(defnode);
 		parentNode = (Node) symbolTable.getObject(parentIdent);
 		getParentNode().addOutput(this);
+		String outputType = Trees.getNodeText(defnode.getChild(0), Global.ruleNames);
+		switch (outputType) {
+			case "uoutput": essential = false;
+			case "output":
+			default:
+		}
 	}
 
 	public void addTrigger() throws ParseException {
@@ -49,6 +57,10 @@ public class Output extends DLolaExpTreeObject {
 
 	public boolean hasInputDependency(Input in) {
 		return inputDependencies.contains(in);
+	}
+	
+	public boolean isEssential() {
+		return essential;
 	}
 
 	public boolean addInputDependencies(ArrayList<Input> dependencies) {

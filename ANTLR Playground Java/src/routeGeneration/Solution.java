@@ -29,16 +29,6 @@ public final class Solution {
 		String offset = "  ";
 		String str;
 
-		for (int i=0; i<outputs.size(); i++) {
-			int delay = OutputDelays[i];
-			Output out= outputs.get(i);
-			if (delay == Global.STAT_DELAY) {
-				Debug.out(verbosity, offset + "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " is statically calculable.");
-			} else {
-				Debug.out(verbosity, offset + "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " has delay: " + delay);
-			}
-		}
-
 		for (Task t : pt.solvedTasks) {
 			if (t.resolved) {
 				Debug.out(verbosity,
@@ -72,6 +62,21 @@ public final class Solution {
 							+ t.PathNodes.get(i).getIdentifier();
 				}
 				Debug.out(verbosity, offset + offset + str);
+			}
+		}
+	}
+	
+	public void printDelays(int verbosity) {
+		if (Global.debugVerbosity < verbosity) return;
+		String offset = "  ";
+
+		for (int i=0; i<outputs.size(); i++) {
+			int delay = OutputDelays[i];
+			Output out= outputs.get(i);
+			if (delay == Global.STAT_DELAY) {
+				Debug.out(verbosity, offset + "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " is statically calculable.");
+			} else {
+				Debug.out(verbosity, offset + "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " has delay: " + delay);
 			}
 		}
 	}

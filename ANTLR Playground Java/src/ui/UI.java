@@ -47,16 +47,22 @@ public class UI {
 			node.addAttribute("ui.label", node.getId());
 		}
 		for (Channel chan : Global.symtable.getChannelList()) {
-			Edge e = chan.getChannel();
-			String label = chan.getIdentifier() + " [";
-			if (chan.isBandwidth_infinite()) {
-				label += "∞, " + chan.getDelay() + "]";
-			} else {
-				label += chan.getBandwidth() + ", " + chan.getDelay() + "]";
+			boolean multipoint = chan.isMultipointChannel();
+			for (Edge e: chan.getChannels()) {
+				String label = chan.getIdentifier() + " [";
+				if (chan.isBandwidth_infinite()) {
+					label += "∞, " + chan.getDelay() + "]";
+				} else {
+					label += chan.getBandwidth() + ", " + chan.getDelay() + "]";
+				}
+				TreeSet<Integer> shiftSet = e.getAttribute("shiftSet");
+				if (multipoint) {
+					e.addAttribute("ui.style", "text-color: blue; fill-color: blue; text-alignment: center;text-size: 20;");
+				} else {
+					e.addAttribute("ui.style", "text-alignment: center;text-size: 20;");
+				}
+				e.addAttribute("ui.label", label);
 			}
-			TreeSet<Integer> shiftSet = e.getAttribute("shiftSet");
-			e.addAttribute("ui.style", "text-alignment: center;text-size: 20;");
-			e.addAttribute("ui.label", label);
 		}
 		new GSFrame(systemModel.getNetworkGraph(), "Network Graph");
 	}

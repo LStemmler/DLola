@@ -94,9 +94,13 @@ public class Task {
 			if (delay != Global.STAT_DELAY) delay += exprSec.getTimeShift();
 		}
 		pt.setAvailableExprSectionDelay(PathNodes.get(0), exprSec, delay);
-		for (int i=1; i < PathNodes.size(); i++) {
-			if (delay != Global.STAT_DELAY) delay += PathChannels.get(i-1).getDelay();
-			pt.setAvailableExprSectionDelay(PathNodes.get(i), exprSec, delay);
+		for (int i=0; i < PathChannels.size(); i++) {
+			if (delay != Global.STAT_DELAY) delay += PathChannels.get(i).getDelay();
+			ArrayList<Node> listeningNodes = PathChannels.get(i).getNodes();
+			for (Node n:listeningNodes) {
+				if (n != PathNodes.get(i))
+					pt.setAvailableExprSectionDelay(n, exprSec, delay);
+			}
 		}
 		pt.calculatedDelays.add(this);
 		return true;
@@ -155,11 +159,11 @@ public class Task {
 		}
 		PathNodes = n.getRelevantSubgraph().getPathNodes(selectedOption);
 		PathChannels = n.getRelevantSubgraph().getPathChannels(selectedOption);
-		for (Node pathnode : PathNodes) {
-			pt.putAvailableExprSections(pathnode, exprSec);
-		}
 		for (Channel pathchannel : PathChannels) {
 			pt.putChannelUser(pathchannel, this);
+			for (Node listener: pathchannel.getNodes()) {
+				pt.putAvailableExprSections(listener, exprSec);
+			}
 		}
 		pt.taskList.remove(this);
 		pt.solvedTasks.add(this);
