@@ -2,16 +2,17 @@ package main;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashSet;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import dlolaExprTree.DLolaExpr;
 import dlolaExprTree.ExpressionMap;
-import dlolaObject.Output;
 import evaluation.Evaluator;
 import parser.DLolaLexer;
 import parser.DLolaParser;
@@ -24,9 +25,19 @@ public class DLolaRunner {
 		
 		//BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
 		
-		String str;
+		String readString;
+		String filePath = null;
 		
-		try(BufferedReader br = new BufferedReader(new FileReader(Global.filePath))) {
+		if (args.length == 1) {
+			filePath = args[0];
+		} else {
+			System.err.println("Please provide the path to the DLola file as argument!");
+			System.exit(-1);
+		}
+		
+		
+		
+		try(BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 		    StringBuilder sb = new StringBuilder();
 		    String line = br.readLine();
 		    
@@ -35,10 +46,10 @@ public class DLolaRunner {
 		        sb.append(System.lineSeparator());
 		        line = br.readLine();
 		    }
-		    str = sb.toString();
+		    readString = sb.toString();
 		}
 		
-		ANTLRInputStream input = new ANTLRInputStream(str);
+		ANTLRInputStream input = new ANTLRInputStream(readString);
 
 		DLolaLexer lexer = new DLolaLexer(input);
 

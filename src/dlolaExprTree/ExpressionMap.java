@@ -4,13 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
-import javax.naming.ldap.ExtendedResponse;
-
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import dlolaObject.Constant;
 import dlolaObject.DLolaExpTreeObject;
-import dlolaObject.DLolaObject;
 import dlolaObject.Output;
 import dlolaObject.Virtual;
 import main.Debug;

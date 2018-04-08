@@ -2,8 +2,6 @@ package dlolaExprTree;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import semanticAnalysis.UntypedException;
-
 public abstract class IntExpr extends DLolaExpr {
 	
 	Operator op;

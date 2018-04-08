@@ -9,12 +9,9 @@ import java.util.Map;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.graphstream.graph.Edge;
 
-import dlolaExprTree.DLolaExpr;
 import dlolaExprTree.DLolaType;
 import dlolaObject.*;
-import main.DLolaRunner;
 import main.Debug;
-import main.Global;
 
 public class SymbolTable {
 
@@ -37,7 +34,6 @@ public class SymbolTable {
 			Debug.err(2, "Symbol table generation failed");
 			Debug.abort();
 		}
-		// TODO Auto-generated constructor stub
 	}
 
 	private void generateLists(DefinitionList deflist) throws ParseException {

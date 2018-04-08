@@ -18,9 +18,8 @@ import ui.UI;
 public class Global {
     
 	
-	// Global variables specifying the target file, output verbosity, and bandwidth requirements. They can be changed at will
+	// Global variables specifying the output verbosity and bandwidth requirements. They can be changed at will
 
-    public static String filePath = "./src/file1.dlola";		// Path to the file to be evaluated
     public static boolean displayAST = true;						// Whether the syntax tree should be shown
     public static boolean displayNetworkGraph = true;				// Whether the network graph should be shown
     public static boolean displayDependencyGraph = true;			// Whether the dependency graph should be shown

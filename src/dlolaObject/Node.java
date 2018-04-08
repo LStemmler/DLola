@@ -2,10 +2,7 @@ package dlolaObject;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.graphstream.graph.implementations.MultiNode;
@@ -14,7 +11,6 @@ import dlolaExprTree.DLolaExpr;
 import dlolaExprTree.ExprSection;
 import dlolaExprTree.ExpressionMap;
 import dlolaExprTree.IdExpr;
-import main.DLolaRunner;
 import main.Debug;
 import main.Global;
 import routeGeneration.RelevantSubgraph;

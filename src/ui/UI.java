@@ -10,14 +10,9 @@ import javax.swing.JScrollPane;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.gui.TreeViewer;
 import org.graphstream.graph.Edge;
-import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.Graphs;
 import org.graphstream.graph.implementations.SingleGraph;
-import org.graphstream.ui.layout.Layout;
-import org.graphstream.ui.layout.Layouts;
-import org.graphstream.ui.swingViewer.GraphRenderer;
-import org.graphstream.ui.view.Viewer;
 
 import dlolaObject.Channel;
 import dlolaObject.DLolaObject;

@@ -6,10 +6,7 @@ import java.util.ArrayList;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.Trees;
 
-import dlolaExprTree.DLolaExpr;
 import dlolaExprTree.DLolaType;
-import dlolaExprTree.ExprSection;
-import dlolaExprTree.ExpressionMap;
 import main.Debug;
 import main.Global;
 import semanticAnalysis.SymbolTable;

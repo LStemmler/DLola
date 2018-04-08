@@ -8,7 +8,6 @@ import dlolaExprTree.DLolaExpr;
 import dlolaExprTree.DLolaType;
 import dlolaExprTree.ExprSection;
 import dlolaExprTree.ExpressionMap;
-import main.Debug;
 import semanticAnalysis.SymbolTable;
 
 public abstract class DLolaExpTreeObject extends DLolaObject {
