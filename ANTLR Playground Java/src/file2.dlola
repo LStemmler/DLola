@@ -1,5 +1,0 @@
-node A {
-	output int poo := boo * choo
-	output int moo := boo * choo
-
-}
