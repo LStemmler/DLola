@@ -120,7 +120,12 @@ public class Evaluator {
 				}
 				if (equivalent) {
 					// equivalent, put into equivalence class eclass
-					if (Global.storeMultipleEquivalentSolutions) {
+					if (sol.getPathTree().solvedTaskSize() < cmp.getPathTree().solvedTaskSize()) {
+						equivalenceClasses.get(eclass).set(0, sol);
+						if (Global.storeMultipleEquivalentSolutions) {
+							equivalenceClasses.get(eclass).add(cmp);
+						}
+					} else if (Global.storeMultipleEquivalentSolutions) {
 						equivalenceClasses.get(eclass).add(sol);
 					}
 					equivalenceClassMembers.set(eclass, equivalenceClassMembers.get(eclass) + 1);
@@ -179,26 +184,29 @@ public class Evaluator {
 
 	public void printEquivalenceClassDetails() {
 		String offset = "  ";
-		Debug.out(13, "Equivalence class details:");
+		Debug.out(16, "Equivalence class details:");
 		for (int eclass = 0; eclass < equivalenceClasses.size(); eclass++) {
 
 			Solution sol = equivalenceClasses.get(eclass).get(0);
-			Debug.out(13, offset + "Equivalence class " + eclass + ":");
+			Debug.out(16, offset + "Equivalence class " + eclass + ":");
 			for (int i = 0; i < Global.symtable.getOutputList().size(); i++) {
 				Output out = Global.symtable.getOutputList().get(i);
 				int delay = sol.OutputDelays[i];
 				if (delay == Global.STAT_DELAY) {
-					Debug.out(13, offset + "Output " + out.getIdentifier() + " at node "
+					Debug.out(16, offset + "Output " + out.getIdentifier() + " at node "
 							+ out.getParentNode().getIdentifier() + " is statically calculable.");
 				} else {
-					Debug.out(13, offset + "Output " + out.getIdentifier() + " at node "
+					Debug.out(16, offset + "Output " + out.getIdentifier() + " at node "
 							+ out.getParentNode().getIdentifier() + " has a delay of " + delay);
 				}
 			}
-			Debug.out(14, "");
-			Debug.out(14, "Detailed solution:");
-			sol.printSolution(14);
-			Debug.out(14, "");
+			Debug.out(17, "");
+			Debug.out(17, "Detailed solution:");
+			sol.printSolution(17);
+			System.out.println("Solution "+(eclass+1)+":");
+			System.out.println(sol.generateDetailedSolution());
+			System.out.println();
+			Debug.out(17, "");
 		}
 	}
 	

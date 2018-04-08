@@ -149,14 +149,31 @@ public class RouteBuilder {
 	private int evaluateAvailableTasks(PathTree pt) {
 		int options= Integer.MAX_VALUE;
 		int bestIndex=0;
+		boolean essentialTasksRemaining = false;
 		for (int i = 0; i<pt.taskList.size(); i++) {
 			Task t = pt.taskList.get(i);
 			int tOptions = t.evaluateAvailableOptions(pt).size();
-			if (tOptions < options) {
+			
+			if (!essentialTasksRemaining) {
+				// Essential tasks have priority
+				if (t.essential) {
+					essentialTasksRemaining = true;
+					options = tOptions;
+					bestIndex = i;
+					if (options==1) break;
+					continue;
+				} else if (tOptions < options) {
+					options = tOptions;
+					bestIndex = i;
+					continue;
+				}
+			}
+			if (t.essential && (tOptions < options)) {
 				options = tOptions;
 				bestIndex = i;
-				if (options==1) break;
+				if (options == 1) break;
 			}
+			
 		}
 		return bestIndex;
 	}

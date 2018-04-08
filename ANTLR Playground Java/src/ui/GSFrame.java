@@ -20,14 +20,14 @@ public class GSFrame extends JFrame {
 
 	public GSFrame(Graph graph) {
 		super();
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		this.graph = graph;
         EventQueue.invokeLater(this::display);
 	}
 	
 	public GSFrame(Graph graph, String title) {
 		super(title);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		this.graph = graph;
         EventQueue.invokeLater(this::display);
 	}

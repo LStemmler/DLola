@@ -18,7 +18,7 @@ public abstract class DLolaObject {
 	public DLolaObject(ParseTree defnode, SymbolTable symbolTable)  {
 		this.identifier = extractIdentifier(defnode);
 		Debug.ensure (this.identifier != null, "Node Identifier null");
-		Debug.ensure(symbolTable.getObject(identifier) == null, "Identifier " + identifier + " already exists");
+		Debug.ensure(symbolTable.isUndefined(identifier), "Identifier " + identifier + " already exists");
 		symbolTable.getIdentifierList().put(identifier, this);
 	}
 
@@ -36,7 +36,7 @@ public abstract class DLolaObject {
 	public DLolaObject(String identifier, SymbolTable symbolTable)  {
 		this.identifier = identifier;
 		Debug.ensure (this.identifier != null, "Node Identifier null");
-		Debug.ensure(symbolTable.getObject(identifier) == null, "Identifier " + identifier + " already exists");
+		Debug.ensure(symbolTable.isUndefined(identifier), "Identifier " + identifier + " already exists");
 		symbolTable.getIdentifierList().put(identifier, this);
 	}
 	

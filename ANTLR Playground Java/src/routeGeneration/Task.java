@@ -17,6 +17,7 @@ public class Task {
 	public ArrayList<Node> PathNodes = new ArrayList<>();
 	public ArrayList<Channel> PathChannels = new ArrayList<>();
 	public boolean resolved = false;
+	public final boolean essential;
 	public HashSet<Task> spawnedTasks = new HashSet<>();
 	
 
@@ -28,13 +29,14 @@ public class Task {
 	    if (!Task.class.isAssignableFrom(obj.getClass())) {
 	        return false;
 	    }
-		return (n.equals(((Task) obj).n) && exprSec.equals(((Task) obj).exprSec));
+		return (n.equals(((Task) obj).n) && exprSec.equals(((Task) obj).exprSec) && (essential == ((Task) obj).essential));
 	}
 
 	// for cloning unresolved /undecided tasks
 	private Task(Task t) {
 		n = t.n;
 		exprSec = t.exprSec;
+		essential = t.essential;
 		if (t.selectedOption != null) {
 			try {
 				throw new PathGenerationException("Should only clone undecided tasks");
@@ -49,9 +51,10 @@ public class Task {
 		return new Task(this);
 	}
 
-	public Task(Node n, ExprSection exprSec) {
+	public Task(Node n, ExprSection exprSec, boolean essential) {
 		this.n = n;
 		this.exprSec = exprSec;
+		this.essential = essential;
 	}
 	
 	public boolean tryCalculateDelays(PathTree pt, Task head) throws UnmonitorableRecursionException {
@@ -77,14 +80,14 @@ public class Task {
 		int delay = Global.STAT_DELAY;
 		Integer subDelay;
 		if (resolved) {
-			subDelay = pt.getAvailableExprSectionDelay(source, exprSec);
+			subDelay = pt.getAvailableExprSectionDelay(source, exprSec, !essential);
 			if (!(exprSec.isRecursive() && source == head.n && exprSec == head.exprSec)) {
 				if (subDelay == null) return false;
 				delay = subDelay;
 			}
 		} else {
 			for (ExprSection child: exprSec.getChildren()) {
-				subDelay = pt.getAvailableExprSectionDelay(source, child);
+				subDelay = pt.getAvailableExprSectionDelay(source, child, !essential);
 				if (!(exprSec.isRecursive() && source == head.n && child == head.exprSec)) {
 					if (subDelay == null) return false;
 					delay = Math.max(delay, subDelay);
@@ -93,13 +96,13 @@ public class Task {
 			// maximum delay at source node
 			if (delay != Global.STAT_DELAY) delay += exprSec.getTimeShift();
 		}
-		pt.setAvailableExprSectionDelay(PathNodes.get(0), exprSec, delay);
+		pt.setAvailableExprSectionDelay(PathNodes.get(0), exprSec, delay, !essential);
 		for (int i=0; i < PathChannels.size(); i++) {
 			if (delay != Global.STAT_DELAY) delay += PathChannels.get(i).getDelay();
 			ArrayList<Node> listeningNodes = PathChannels.get(i).getNodes();
 			for (Node n:listeningNodes) {
 				if (n != PathNodes.get(i))
-					pt.setAvailableExprSectionDelay(n, exprSec, delay);
+					pt.setAvailableExprSectionDelay(n, exprSec, delay, !essential);
 			}
 		}
 		pt.calculatedDelays.add(this);
@@ -129,7 +132,7 @@ public class Task {
 		} else {
 			subexpDelays.put(exprSec, currentDelay);
 			for (Task child: getChildren(pt)) {
-				if (!pt.nonstarvingRecursions.contains(child)) {
+				if (child.exprSec.isRecursive() && !pt.nonstarvingRecursions.contains(child)) {
 					int delayChange = child.n.getRelevantSubgraph().getCurDelay(child.selectedOption);
 					delayChange += exprSec.getTimeShift();
 					ensureNonstarvingRecursion(pt, currentDelay+ delayChange, relativeDelays);
@@ -147,22 +150,23 @@ public class Task {
 		this.selectedOption = selectedOption;
 		Node node = n.getRelevantSubgraph().getDLolaNode(selectedOption);
 		
-		if (pt.getAvailableExprSections(node).containsKey(exprSec)) {
+		if (pt.isAvailableExprSection(node, exprSec, !essential)) {
 			//No split required, but safe
 			resolved = true;
 		} else {
 			for (ExprSection child : exprSec.getChildren()) {
-				Task spawnedTask = new Task(node, child);
+				Task spawnedTask = new Task(node, child, essential);
 				Task resultingTask = pt.addOrMerge(spawnedTask);
 				spawnedTasks.add(resultingTask);
 			}
 		}
 		PathNodes = n.getRelevantSubgraph().getPathNodes(selectedOption);
 		PathChannels = n.getRelevantSubgraph().getPathChannels(selectedOption);
+		pt.putAvailableExprSections(node, exprSec, !essential);
 		for (Channel pathchannel : PathChannels) {
 			pt.putChannelUser(pathchannel, this);
 			for (Node listener: pathchannel.getNodes()) {
-				pt.putAvailableExprSections(listener, exprSec);
+				pt.putAvailableExprSections(listener, exprSec, !essential);
 			}
 		}
 		pt.taskList.remove(this);
@@ -178,7 +182,7 @@ public class Task {
 	ArrayList<org.graphstream.graph.Node> evaluateAvailableOptions(PathTree pt) {
 		ArrayList<org.graphstream.graph.Node> orderedList = new ArrayList<>();
 		try {
-			HashSet<org.graphstream.graph.Node> options = n.getRelevantSubgraph().getOptions(pt, exprSec);
+			HashSet<org.graphstream.graph.Node> options = n.getRelevantSubgraph().getOptions(pt, exprSec, essential);
 			orderedList.addAll(options);
 		} catch (PathGenerationException e) {
 			e.printStackTrace();

@@ -1,0 +1,32 @@
+
+const int bli := 5
+const bool boo := true
+virtual int poo := bla + blub
+
+node A {
+	input int blub
+	output int foo := poo * blub
+	output bool toggle := !toggle[-1, true]
+	output int b_out := b
+}
+
+node B {
+	input int bla
+	output bool moo := if !boo[1, true] {a} elif a[-2, false] {c} else {moo [-1, false]}
+	output int eout := e
+	trigger moo
+}
+
+node C {
+	input int b
+	input bool a, c, d
+	output int e := if c<->d {f} else {b[-4, 1]}
+	output bool joo := (foo =  bla[-2, 1] + b )
+	output int f := if a {6} else {0}
+	trigger joo
+}
+
+channel chan_AB 50 1 A B
+channel chan_BCinf 31 B C
+channel chan_BCfast 4 12 B C
+dchannel chan_CBd 4 6 C B

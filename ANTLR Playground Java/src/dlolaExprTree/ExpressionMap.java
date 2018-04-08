@@ -1,5 +1,6 @@
 package dlolaExprTree;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -7,7 +8,11 @@ import javax.naming.ldap.ExtendedResponse;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import dlolaObject.Constant;
+import dlolaObject.DLolaExpTreeObject;
+import dlolaObject.DLolaObject;
 import dlolaObject.Output;
+import dlolaObject.Virtual;
 import main.Debug;
 import main.Global;
 
@@ -15,6 +20,7 @@ public class ExpressionMap {
 
 	
 	static HashMap<ParseTree, DLolaExpr> treeExpressionMap = new HashMap<>();
+	static HashMap<DLolaExpr, ArrayList<DLolaExpTreeObject>> objectMap = new HashMap<>();
 	static HashMap<DLolaExpr, ExprSection> exprSectionMap = new HashMap<>();
 	
 	
@@ -41,6 +47,9 @@ public class ExpressionMap {
 	}
 
 
+	public static ArrayList<DLolaExpTreeObject> getObjects(DLolaExpr expr) {
+		return objectMap.get(expr);
+	}
 
 	public static final ExpressionMap expressionMap = new ExpressionMap();
 	
@@ -120,5 +129,37 @@ public class ExpressionMap {
 	}
 	
 	
+	public static void linkExpTreeObjects() {
+		for (Output obj: Global.symtable.getOutputList()) {
+			addExpTreeObjectLink(obj);
+		}
+		for (Virtual obj: Global.symtable.getVirtualList()) {
+			addExpTreeObjectLink(obj);
+		}
+		for (Constant obj: Global.symtable.getConstantList()) {
+			addExpTreeObjectLink(obj);	
+		}
+	}
+	
+	private static void addExpTreeObjectLink(DLolaExpTreeObject obj) {
+		DLolaExpr expr = obj.getExpression();
+		ArrayList<DLolaExpTreeObject> set = objectMap.get(expr);
+		if (set == null) {
+			set = new ArrayList<>();
+			objectMap.put(expr, set);
+		}
+		set.add(obj);
+		try {
+			DLolaExpr exprHead = getExprSection(expr).getHead();
+			if (exprHead != expr) {
+				set = objectMap.get(exprHead);
+				if (set == null) {
+					set = new ArrayList<>();
+					objectMap.put(exprHead, set);
+				}
+				set.add(obj);
+			}
+		} catch (NullPointerException e) {}
+	}
 	
 }

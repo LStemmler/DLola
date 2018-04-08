@@ -9,7 +9,7 @@ import main.Global;
 
 public class IdExpr extends DLolaExpr {
 
-	String identifier;
+	public String identifier;
 	DLolaObject objRef;
 	
 	public IdExpr(ParseTree tree) {

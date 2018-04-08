@@ -20,8 +20,6 @@ public class Output extends DLolaExpTreeObject {
 	ArrayList<Input> inputDependencies = new ArrayList<Input>();
 	boolean trigger = false;
 	boolean essential = true;
-	DLolaExpr expression;
-	ExprSection section;
 
 	public Output(ParseTree defnode, SymbolTable symbolTable) throws ParseException {
 		super(defnode, symbolTable);
@@ -77,14 +75,5 @@ public class Output extends DLolaExpTreeObject {
 		return parentNode;
 	}
 
-	public DLolaExpr getExpression() {
-		if (expression == null) expression = ExpressionMap.getExpression(expressionTree);
-		return expression;
-	}
-
-	public ExprSection getExprSection() {
-		if (section == null) section = ExpressionMap.getExprSection(ExpressionMap.getExpression(expressionTree));
-		return section;
-	}
 
 }

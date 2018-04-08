@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.gui.TreeViewer;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.Graphs;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.layout.Layouts;
@@ -29,6 +30,19 @@ import semanticAnalysis.SystemModel;
 
 public class UI {
 
+	final String NODESTYLE_INPUT = "shape:triangle;fill-color: green;size: 30px; text-color: black; text-alignment: center;";
+	final String NODESTYLE_TARGET = "text-color: blue; fill-color: yellow; shape:circle;size: 30px; text-alignment: center;";
+	final String NODESTYLE_TARGET_INPUT = "shape:triangle;fill-color: yellow;size: 30px; text-color: blue; text-alignment: center;";
+	final String NODESTYLE_IRRELEVANT = "shape:circle;fill-color: white;size: 5px; text-color: grey; text-alignment: center;";
+	final String NODESTYLE_NEUTRAL = "shape:circle;fill-color: white;size: 30px; text-alignment: center;";
+	
+	final String EDGESTYLE_NEUTRAL = "text-alignment: along;text-background-mode: plain;text-size: 15;";
+	final String EDGESTYLE_UNRELIABLE = "text-color: blue; fill-color: blue; text-alignment: along;text-background-mode: plain;text-size: 15;";
+	final String EDGESTYLE_INDIRECT = "text-color: red; fill-color: red; text-alignment: along;text-background-mode: plain;text-size: 15;";
+	final String EDGESTYLE_IRRELEVANT = "text-color: grey; fill-color: grey; text-alignment: along;text-background-mode: plain;text-size: 5;";
+	
+	
+	
     private SystemModel systemModel;
 
 	public UI() {
@@ -111,31 +125,85 @@ public class UI {
 		if (!Global.displayRelevantSubgraphs) return;
 		for (RelevantSubgraph rs: systemModel.getAllRelevantSubgraphs()) {
 			dlolaObject.Node n = rs.getOutputNode();
-			for (Input in: n.getInputDependencies()) {
-				SingleGraph relevantSubgraph = rs.getChannelTree();
+			for (Input in: n.getRelevantInputs()) {
+				SingleGraph relevantSubgraph = (SingleGraph) Graphs.clone(rs.getChannelTree());
 				for (Node node : relevantSubgraph) {
-					node.addAttribute("ui.style", "shape:circle;fill-color: white;size: 30px; text-alignment: center;");
+					node.addAttribute("ui.style", NODESTYLE_NEUTRAL);
 					try {
 						int delay = rs.getMinDelay(node, in);
 						node.addAttribute("ui.label", rs.getNodeIdentifier(node)+ "   " + "Delay: " + rs.getCurDelay(node)  +" / " + delay);
+						if (rs.getDLolaNode(node).getInputList().contains(in)) {
+							node.addAttribute("ui.style", NODESTYLE_INPUT);
+						}
 					} catch (NullPointerException e) {
 						node.addAttribute("ui.label", rs.getNodeIdentifier(node));
-						node.addAttribute("ui.style", "shape:circle;fill-color: white;size: 30px; text-color: grey; text-alignment: center;");
+						node.addAttribute("ui.style", NODESTYLE_IRRELEVANT);
+					}
+					if (node.getAttribute("Target") != null) {
+						if (node.getAttribute("ui.style").equals(NODESTYLE_INPUT)) {
+							node.addAttribute("ui.style", NODESTYLE_TARGET_INPUT);
+						} else {
+							node.addAttribute("ui.style", NODESTYLE_TARGET);
+						}
 					}
 				}
-				rs.getTarget().addAttribute("ui.style", "text-color: blue; fill-color: yellow; shape:circle;size: 30px; text-alignment: center;");
 				for (Edge edge : relevantSubgraph.getEachEdge()) {
-					edge.addAttribute("ui.style", "text-alignment: along;text-background-mode: plain;text-size: 15;");
-					edge.addAttribute("ui.label", rs.getEdgeIdentifier(edge));
-					if (rs.isIndirect(edge)) {
-						edge.addAttribute("ui.style", "text-color: red; fill-color: red; text-alignment: along;text-background-mode: plain;text-size: 15;");
-					}
+					edge.addAttribute("ui.style", EDGESTYLE_NEUTRAL);
+					edge.addAttribute("ui.label", rs.getEdgeChannel(edge).getIdentifier());
 					if (!rs.getReachableInputs(edge).contains(in)) {
-						edge.addAttribute("ui.style", "text-color: grey; fill-color: grey; text-alignment: along;text-background-mode: plain;text-size: 5;");
+						edge.addAttribute("ui.style", EDGESTYLE_IRRELEVANT);
+					} else if (rs.isIndirect(edge)) {
+						edge.addAttribute("ui.style", EDGESTYLE_INDIRECT);
 					}
 				}
-				new GSFrame(relevantSubgraph, "Subgraph for Input "+ in.getIdentifier() + " to Node " + rs.getOutputNode().getIdentifier());
+				new GSFrame(relevantSubgraph, "Subgraph for essential Input "+ in.getIdentifier() + " to Node " + rs.getOutputNode().getIdentifier());
 			}
+			
+
+			for (Input in: n.getUnreliableRelevantInputs()) {
+				SingleGraph relevantSubgraph = (SingleGraph) Graphs.clone(rs.getChannelTree());
+				for (Node node : relevantSubgraph) {
+					node.addAttribute("ui.style", NODESTYLE_NEUTRAL);
+					try {
+						int delay = rs.getMinUnreliableDelay(node, in);
+						node.addAttribute("ui.label", rs.getNodeIdentifier(node)+ "   " + "Delay: " + rs.getCurDelay(node)  +" / " + delay);
+						if (rs.getDLolaNode(node).getInputList().contains(in)) {
+							node.addAttribute("ui.style", NODESTYLE_INPUT);
+						}
+					} catch (NullPointerException e) {
+						try {
+							int delay = rs.getMinDelay(node, in);
+							node.addAttribute("ui.label", rs.getNodeIdentifier(node)+ "   " + "Delay: " + rs.getCurDelay(node)  +" / " + delay);
+							if (rs.getDLolaNode(node).getInputList().contains(in)) {
+								node.addAttribute("ui.style", NODESTYLE_INPUT);
+							}
+						} catch (NullPointerException f) {
+							node.addAttribute("ui.label", rs.getNodeIdentifier(node));
+							node.addAttribute("ui.style", NODESTYLE_IRRELEVANT);
+						}
+					}
+					if (node.getAttribute("Target") != null) {
+						if (node.getAttribute("ui.style").equals(NODESTYLE_INPUT)) {
+							node.addAttribute("ui.style", NODESTYLE_TARGET_INPUT);
+						} else {
+							node.addAttribute("ui.style", NODESTYLE_TARGET);
+						}
+					}
+				}
+				for (Edge edge : relevantSubgraph.getEachEdge()) {
+					edge.addAttribute("ui.style", EDGESTYLE_NEUTRAL);
+					edge.addAttribute("ui.label", rs.getEdgeIdentifier(edge));
+					if (!rs.getReachableInputs(edge).contains(in) && !rs.getUnreliablyReachableInputs(edge).contains(in)) {
+						edge.addAttribute("ui.style", EDGESTYLE_IRRELEVANT);
+					} else if (rs.isIndirect(edge)) {
+						edge.addAttribute("ui.style", EDGESTYLE_INDIRECT);
+					} else if (!rs.isReliable(edge)){
+						edge.addAttribute("ui.style", EDGESTYLE_UNRELIABLE);
+					}
+				}
+				new GSFrame(relevantSubgraph, "Subgraph for nonessential Input "+ in.getIdentifier() + " to Node " + rs.getOutputNode().getIdentifier());
+			}
+			
 		}
 		
 	}

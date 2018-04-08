@@ -54,12 +54,7 @@ public abstract class DLolaExpr {
 	public DLolaExpr(ParseTree tree) {
 		ExpressionMap.putExpression(tree, this);
 	}
-
-	public boolean complete() {
-		// TODO
-		return false;
-	}
-
+	
 	protected ArrayList<Input> getSubexpRequiredInputs() {
 		ArrayList<Input> subexpRequiredInputs = new ArrayList<>();
 		for (DLolaExpr subexp : subexpressions) {
@@ -136,6 +131,7 @@ public abstract class DLolaExpr {
 		}
 
 		switch (nodeType) {
+		case "restrExpr":
 		case "expression":
 			return new ParenExpr(tree);
 		case "equivExpr":
@@ -182,7 +178,7 @@ public abstract class DLolaExpr {
 	}
 
 	public int getBandwidth() {
-		return type.size();
+		return getType().size();
 	}
 
 	boolean checkMergeability(DLolaExpr compExpr) {
@@ -218,6 +214,13 @@ public abstract class DLolaExpr {
 	}
 
 	public DLolaType getType() {
+		if (type == null) {
+			try {
+				typecheck();
+			} catch (TypeException e) {
+				Debug.err(3, "TypeException in typecheck for getType");
+			}
+		}
 		return type;
 	}
 }

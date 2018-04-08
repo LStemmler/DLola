@@ -1,9 +1,12 @@
 package routeGeneration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 
 import dlolaObject.Input;
 import dlolaObject.Output;
+import dlolaObject.Node;
 import main.Debug;
 import main.Global;
 
@@ -19,7 +22,7 @@ public final class Solution {
 		
 		for (int i=0; i<outputs.size(); i++) {
 			Output out = outputs.get(i);
-			OutputDelays[i] = pt.getAvailableExprSectionDelay(out.getParentNode(), out.getExprSection());
+			OutputDelays[i] = pt.getAvailableExprSectionDelay(out.getParentNode(), out.getExprSection(), !out.isEssential());
 		}
 	}
 	
@@ -79,5 +82,46 @@ public final class Solution {
 				Debug.out(verbosity, offset + "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " has delay: " + delay);
 			}
 		}
+	}
+	
+	public PathTree getPathTree() {
+		return pt;
+	}
+	
+	public String generateDetailedSolution() {
+		HashMap<Node, ArrayList<Task>> tasksByNodes = new HashMap<>();
+		for (Node n: Global.symtable.getNodeList()) {
+			tasksByNodes.put(n, new ArrayList<Task>());
+		}
+		
+		for (Task t: pt.solvedTasks) {
+			for (Node n: t.PathNodes) {
+				tasksByNodes.get(n).add(t);
+			}
+		}
+		
+		String retString = new String();
+		String newline = Global.newline;
+		
+
+		for (int i=0; i<outputs.size(); i++) {
+			int delay = OutputDelays[i];
+			Output out= outputs.get(i);
+			if (delay == Global.STAT_DELAY) {
+				retString += "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " is statically calculable." + newline;
+			} else {
+				retString += "Output "+ out.getIdentifier() + " at node " + out.getParentNode().getIdentifier() + " has delay: " + delay+newline;
+			}
+		}
+		retString += newline;
+		
+		for (Entry<Node, ArrayList<Task>> e: tasksByNodes.entrySet()) {
+			Node n = e.getKey();
+			ArrayList<Task> tasklist = e.getValue();
+			String nodestring = n.generateNodeSolution(this, tasklist);
+			retString += nodestring + newline;
+		}
+		
+		return retString;
 	}
 }

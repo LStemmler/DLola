@@ -44,34 +44,31 @@ public final class RelevantSubgraph {
 		boolean[] visited = new boolean[Global.systemModel.getNetworkGraph().getNodeCount()];
 		boolean[] passed = new boolean[Global.symtable.getChannelList().size()];
 
-		target = calculateChannelTrees(targetNode, 0, visited, passed);
+		target = calculateChannelTrees(targetNode, 0, visited, passed, true);
+		setTarget(target);
 
 	}
 
-	private Node calculateChannelTrees(dlolaObject.Node node, int delay, boolean[] visited, boolean[] passed) {
+	private Node calculateChannelTrees(dlolaObject.Node node, int delay, boolean[] visited, boolean[] passed, boolean reliable) {
 		
-		//TODO clean up, better relevant subgraphs after introducing multipoint channels
-		// calculateIndirectChannelTrees einbinden
-		// evtl bei calculateIndirectChannelTrees Optionen ohne reachable Inputs streichen
-		
-		
-
 		Node n = node.getGraphNode();
 		if (visited[n.getIndex()]) {
 			// becomes indirect
-			return calculateIndirectChannelTrees(node, delay, new boolean[visited.length], new boolean[passed.length]);
+			return calculateIndirectChannelTrees(node, delay, new boolean[visited.length], new boolean[passed.length], reliable);
 		} else {
 			HashMap<Input, Integer> minDelay = new HashMap<>();
+			HashMap<Input, Integer> minUnreliableDelay = new HashMap<>();
 			Node ownNode = null;
-			HashSet<Input> reachedInputs = new HashSet<>();
 
 			for (Input in : node.getInputList()) {
 				if (ownNode == null) {
 					ownNode = createNextIndexedNode(node);
 				}
-				setMinDelay(ownNode, in, delay);
-				minDelay.put(in, delay);
-				reachedInputs.add(in);
+				if (reliable) {
+					minDelay.put(in, delay);
+				} else {
+					minUnreliableDelay.put(in, delay);
+				}
 			}
 			visited[n.getIndex()] = true;
 
@@ -94,14 +91,21 @@ public final class RelevantSubgraph {
 				} else {
 					passed[index] = true;
 				}
+				boolean prevReliable = reliable && chan.isReliable();
 
 				int channelDelay = Global.symtable.getChannel(entering).getDelay();
 				Node prevTreeNode;
 				if (!indirect) {
 					prevTreeNode = calculateChannelTrees(Global.symtable.getNode(fromNode), delay + channelDelay,
-							visited, passed);
+							visited, passed, prevReliable);
 				} else {
-					prevTreeNode = calculateIndirectChannelTrees(node, delay, new boolean[visited.length], new boolean[passed.length]);
+					boolean[] newvisited = new boolean[visited.length];
+					boolean[] newpassed = new boolean[passed.length];
+					
+					newvisited[n.getIndex()] = true;
+					newpassed[index] = true;
+					
+					prevTreeNode = calculateIndirectChannelTrees(Global.symtable.getNode(fromNode), delay + channelDelay, newvisited, newpassed, reliable && chan.isReliable());
 				}
 
 				// relevant subgraph
@@ -110,50 +114,68 @@ public final class RelevantSubgraph {
 						ownNode = createNextIndexedNode(node);
 					}
 					for (Input in : getReachableInputs(prevTreeNode)) {
-						if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > getMinDelay(prevTreeNode, in)) {
-							minDelay.put(in, getMinDelay(prevTreeNode, in));
+						int inDelay = getMinDelay(prevTreeNode, in);
+						if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > inDelay) {
+							minDelay.put(in, inDelay);
 						}
-						reachedInputs.add(in);
+						if (minUnreliableDelay.getOrDefault(in, Integer.MIN_VALUE) >= inDelay) {
+							minUnreliableDelay.remove(in);
+						}
+					}
+					for (Input in : getUnreliablyReachableInputs(prevTreeNode)) {
+						int inDelay = getMinUnreliableDelay(prevTreeNode, in);
+						if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > inDelay) {
+							if (minUnreliableDelay.getOrDefault(in, Integer.MAX_VALUE) > inDelay) {
+								minUnreliableDelay.put(in, inDelay);
+							}
+						}
 					}
 					Edge pathEdge = channelTree.addEdge(createNextEdgeIndex(entering.getId()), prevTreeNode, ownNode,
 							true);
 					setEdgeIdentifier(pathEdge, entering.getId());
 					setEdgeChannel(pathEdge, Global.systemModel.getChannel(entering));
-					setIndirect(pathEdge, indirect);
+					setIndirect(pathEdge, indirect || visited[getDLolaNode(prevTreeNode).getGraphNode().getIndex()]);
 				}
 				if (!indirect) {
 					passed[index] = false;
 				}
 			}
 			if (ownNode != null) {
+				setCurDelay(ownNode, delay);
 				for (Input in : minDelay.keySet()) {
 					setMinDelay(ownNode, in, minDelay.get(in));
 				}
-				setCurDelay(ownNode, delay);
-				setReachableInputs(ownNode, reachedInputs);
+				setReachableInputs(ownNode, new HashSet<>(minDelay.keySet()));
+				for (Input in : minUnreliableDelay.keySet()) {
+					setMinUnreliableDelay(ownNode, in, minUnreliableDelay.get(in));
+				}
+				setUnreliablyReachableInputs(ownNode, new HashSet<>(minUnreliableDelay.keySet()));
 			}
 			visited[n.getIndex()] = false;
+			AddRelevantInputs(node, reliable);
 			return ownNode;
 		}
 	}
 	
-	private Node calculateIndirectChannelTrees(dlolaObject.Node node, int delay, boolean[] visited, boolean[] passed) {
+	private Node calculateIndirectChannelTrees(dlolaObject.Node node, int delay, boolean[] visited, boolean[] passed, boolean reliable) {
 		Node n = node.getGraphNode();
 		if (visited[n.getIndex()]) {
 			// useless circle
 			return null;
 		} else {
 			HashMap<Input, Integer> minDelay = new HashMap<>();
+			HashMap<Input, Integer> minUnreliableDelay = new HashMap<>();
 			Node ownNode = null;
-			HashSet<Input> reachedInputs = new HashSet<>();
 
 			for (Input in : node.getInputList()) {
 				if (ownNode == null) {
 					ownNode = createNextIndexedNode(node);
 				}
-				setMinDelay(ownNode, in, delay);
-				minDelay.put(in, delay);
-				reachedInputs.add(in);
+				if (reliable) {
+					minDelay.put(in, delay);
+				} else {
+					minUnreliableDelay.put(in, delay);
+				}
 			}
 			visited[n.getIndex()] = true;
 
@@ -173,40 +195,81 @@ public final class RelevantSubgraph {
 					continue; //Already passed that (probably multinode) channel, no need to visit
 				}
 				passed[index] = true;
+				boolean prevReliable = reliable && chan.isReliable();
 
 				int channelDelay = chan.getDelay();
 				Node prevTreeNode = calculateIndirectChannelTrees(Global.symtable.getNode(fromNode), delay + channelDelay,
-						visited, passed);
+						visited, passed, prevReliable);
 
 				// relevant subgraph
 				if (prevTreeNode != null) {
-					if (ownNode == null) {
-						ownNode = createNextIndexedNode(node);
-					}
-					for (Input in : getReachableInputs(prevTreeNode)) {
-						if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > getMinDelay(prevTreeNode, in)) {
-							minDelay.put(in, getMinDelay(prevTreeNode, in));
+					if (visited[getDLolaNode(prevTreeNode).getGraphNode().getIndex()]) {
+						channelTree.removeNode(prevTreeNode);
+					} else {
+						if (ownNode == null) {
+							ownNode = createNextIndexedNode(node);
 						}
-						reachedInputs.add(in);
+						for (Input in : getReachableInputs(prevTreeNode)) {
+							int inDelay = getMinDelay(prevTreeNode, in);
+							if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > inDelay) {
+								minDelay.put(in, inDelay);
+							}
+							if (minUnreliableDelay.getOrDefault(in, Integer.MIN_VALUE) >= inDelay) {
+								minUnreliableDelay.remove(in);
+							}
+						}
+						for (Input in : getUnreliablyReachableInputs(prevTreeNode)) {
+							int inDelay = getMinUnreliableDelay(prevTreeNode, in);
+							if (minDelay.getOrDefault(in, Integer.MAX_VALUE) > inDelay) {
+								if (minUnreliableDelay.getOrDefault(in, Integer.MAX_VALUE) > inDelay) {
+									minUnreliableDelay.put(in, inDelay);
+								}
+							}
+						}
+						Edge pathEdge = channelTree.addEdge(createNextEdgeIndex(entering.getId()), prevTreeNode, ownNode,
+								true);
+						setEdgeIdentifier(pathEdge, entering.getId());
+						setEdgeChannel(pathEdge, Global.systemModel.getChannel(entering));
+						setIndirect(pathEdge, true);
 					}
-					Edge pathEdge = channelTree.addEdge(createNextEdgeIndex(entering.getId()), prevTreeNode, ownNode,
-							true);
-					setEdgeIdentifier(pathEdge, entering.getId());
-					setEdgeChannel(pathEdge, Global.systemModel.getChannel(entering));
-					setIndirect(pathEdge, true);
+					
 				}
 				passed[index] = false;
 			}
 			if (ownNode != null) {
+				setCurDelay(ownNode, delay);
 				for (Input in : minDelay.keySet()) {
 					setMinDelay(ownNode, in, minDelay.get(in));
 				}
-				setCurDelay(ownNode, delay);
-				setReachableInputs(ownNode, reachedInputs);
+				setReachableInputs(ownNode, new HashSet<>(minDelay.keySet()));
+				for (Input in : minUnreliableDelay.keySet()) {
+					setMinUnreliableDelay(ownNode, in, minUnreliableDelay.get(in));
+				}
+				setUnreliablyReachableInputs(ownNode, new HashSet<>(minUnreliableDelay.keySet()));
 			}
 			visited[n.getIndex()] = false;
 			return ownNode;
 		}
+	}
+	
+	
+	private void AddRelevantInputs(dlolaObject.Node node, boolean reliable) {
+		if (reliable) {
+			for (Input in: targetNode.getInputDependencies()) {
+				node.addRelevantInput(in);
+			}
+		}
+		for (Input in: targetNode.getNonessentialInputDependencies()) {
+			node.addUnreliableRelevantInputs(in);
+		}
+	}
+	
+	
+	public boolean isTarget(Node n) {
+		return n.getAttribute("Target");
+	}
+	public void setTarget(Node n) {
+		n.setAttribute("Target", true);
 	}
 
 	public String getNodeIdentifier(Node n) {
@@ -237,6 +300,10 @@ public final class RelevantSubgraph {
 		return e.getAttribute("Indirect");
 	}
 
+	public boolean isReliable(Edge e) {
+		return ((Channel) e.getAttribute("Channel")).isReliable();
+	}
+
 	public void setIndirect(Edge e, boolean indirect) {
 		e.setAttribute("Indirect", indirect);
 	}
@@ -260,6 +327,25 @@ public final class RelevantSubgraph {
 	public HashSet<Input> getReachableInputs(Edge e) {
 		return e.getSourceNode().getAttribute("ReachableInputs");
 	}
+
+	private void setUnreliablyReachableInputs(Node n, HashSet<Input> reachableInputs) {
+		n.setAttribute("UnreliablyReachableInputs", reachableInputs);
+	}
+	public HashSet<Input> getUnreliablyReachableInputs() {
+		return target.getAttribute("UnreliablyReachableInputs");
+	}
+	
+	public HashSet<Input> getUnreliablyReachableInputs(Node n) {
+		return n.getAttribute("UnreliablyReachableInputs");
+	}
+
+	public HashSet<Input> getUnreliablyReachableInputs(Edge e) {
+		return e.getSourceNode().getAttribute("UnreliablyReachableInputs");
+	}
+	
+	public int getMinUnreliableDelay(Node n, Input in) {
+		return n.getAttribute("MinUnreliableDelay " + in.getIdentifier());
+	}
 	
 	public int getMinDelay(Node n, Input in) {
 		return n.getAttribute("MinDelay " + in.getIdentifier());
@@ -272,6 +358,11 @@ public final class RelevantSubgraph {
 	private void setMinDelay(Node n, Input in, int delay) {
 		n.setAttribute("MinDelay " + in.getIdentifier(), delay);
 	}
+	
+	private void setMinUnreliableDelay(Node n, Input in, int delay) {
+		n.setAttribute("MinUnreliableDelay " + in.getIdentifier(), delay);
+	}
+
 
 	private Node createNextIndexedNode(dlolaObject.Node node) {
 		String str = node.getIdentifier();
@@ -299,10 +390,18 @@ public final class RelevantSubgraph {
 		}
 	}
 	
-	public HashSet<Node> getOptions(PathTree pt, ExprSection exprSec) throws PathGenerationException {
+	public HashSet<Node> getOptions(PathTree pt, ExprSection exprSec, boolean essential) throws PathGenerationException {
 		ArrayList<Input> requiredInputs = exprSec.getRequiredInputs();
-		if (!getReachableInputs().containsAll(requiredInputs)) {
-			throw new PathGenerationException("Unreachable inputs during getOptions");
+		if (essential) {
+			if (!getReachableInputs().containsAll(requiredInputs)) {
+				throw new PathGenerationException("Unreachable inputs during getOptions");
+			}
+		} else {
+			for (Input in: requiredInputs) {
+				if (!getReachableInputs().contains(in) && !getUnreliablyReachableInputs().contains(in)) {
+					throw new PathGenerationException("Unreachable inputs during getOptions");
+				}
+			}
 		}
 		HashSet<Node> options;
 		if (exprSec.getOptSize() == 0 || exprSec.shouldSplit()) {
@@ -310,42 +409,54 @@ public final class RelevantSubgraph {
 			options.add(target);
 			return options;
 		}
-		options = getOptions(pt, exprSec, target);
+
+		options = getOptions(pt, exprSec, target, !essential);
 		if (options.isEmpty()) {
 			throw new PathGenerationException("No options found in path generation.");
 		}
 		return options;
 	}
 
-	private HashSet<Node> getOptions(PathTree pt, ExprSection exprSec, Node n) {
+	private HashSet<Node> getOptions(PathTree pt, ExprSection exprSec, Node n, boolean unreliable) {
 		ArrayList<Input> requiredInputs = exprSec.getRequiredInputs();
 		HashSet<Node> options = new HashSet<Node>();
-		if (getReachableInputs(n).containsAll(requiredInputs)) {
+		dlolaObject.Node node = getDLolaNode(n);
 
-			if (pt.getAvailableExprSections(getDLolaNode(n)).containsKey(exprSec)) {
-				// contains parent (without split)
-				options.add(n);
-				return options;
-			} else {
-				// Inputs cannot be split, they must be resolved
-				if(exprSec.getChildren().size() != 0) {
-					options.add(n);
-					boolean containsChildren = true;
-					int index = 0;
-					while (containsChildren) {
-						if (index == exprSec.getChildren().size()) {
-							// contains all children
-							return options;
-						}
-						containsChildren = pt.getAvailableExprSections(getDLolaNode(n))
-								.containsKey(exprSec.getChildren().get(index++));
-					}
-				}
+		if (unreliable) {
+			for (Input in : requiredInputs) {
+				if (!getReachableInputs().contains(in) && !getUnreliablyReachableInputs().contains(in))
+					return options;
 			}
-			for (Edge e : n.getEnteringEdgeSet()) {
-				if (!isIndirect(e)) {
-					options.addAll(getOptions(pt, exprSec, e.getSourceNode()));
+		} else {
+			if (!getReachableInputs(n).containsAll(requiredInputs))
+				return options;
+		}
+
+		boolean isAvailable = pt.isAvailableExprSection(node, exprSec, unreliable);
+		if (isAvailable) {
+			// contains parent (without split)
+			options.add(n);
+			if (!(unreliable && !pt.unreliableExprSectionPresent(node, exprSec))) {
+				// If there's no unreliable path for an unreliable output planned yet, it might yield a better solution
+				return options;
+			}
+		}
+		// Inputs cannot be split, they must be resolved
+		if (exprSec.getChildren().size() != 0) {
+			options.add(n);
+			boolean containsChildren = true;
+			int index = 0;
+			while (containsChildren) {
+				if (index == exprSec.getChildren().size()) {
+					// contains all children
+					return options;
 				}
+				containsChildren = pt.isAvailableExprSection(node, exprSec.getChildren().get(index++), unreliable);
+			}
+		}
+		for (Edge e : n.getEnteringEdgeSet()) {
+			if (!isIndirect(e) && (isReliable(e) || unreliable)) {
+				options.addAll(getOptions(pt, exprSec, e.getSourceNode(), unreliable));
 			}
 		}
 		return options;

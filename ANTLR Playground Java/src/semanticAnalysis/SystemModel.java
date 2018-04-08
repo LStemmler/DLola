@@ -197,7 +197,7 @@ public class SystemModel {
 		for (dlolaObject.Node n : symtable.getNodeList()) {
 			for (Output o : n.getOutputList()) {
 				o.addInputDependencies(getDGInputDependencies(o));
-				n.addInputDependencies(getDGInputDependencies(o));
+				n.addInputDependencies(o);
 			}
 		}
 
@@ -230,17 +230,27 @@ public class SystemModel {
 			try {
 				if (Global.debugVerbosity >= 16) {
 					String deplist = new String();
+					String nonessentialDeplist = new String();
 					String subgraphs = new String();
-					for (Input in : n.getInputDependencies()) {
-						deplist += in.getIdentifier() + ", ";
+					if (!n.getInputDependencies().isEmpty()) {
+						for (Input in : n.getInputDependencies()) {
+							deplist += in.getIdentifier() + ", ";
+						}
+						Debug.out(16, "Node " + n.getIdentifier() + " requires inputs: "
+								+ deplist.substring(0, Math.max(deplist.length() - 2, 0)));
+					}
+					if (!n.getNonessentialInputDependencies().isEmpty()) {
+						for (Input in : n.getNonessentialInputDependencies()) {
+							nonessentialDeplist += in.getIdentifier() + ", ";
+						}
+						Debug.out(16, "Node " + n.getIdentifier() + " requires nonessential inputs: "
+								+ nonessentialDeplist.substring(0, Math.max(nonessentialDeplist.length() - 2, 0)));
 					}
 					try {
 						for (Input in : n.getRelevantInputs()) {
 							subgraphs += in.getIdentifier() + ", ";
 						}
 					} catch (NullPointerException f) {}
-					Debug.out(16, "Node " + n.getIdentifier() + " requires inputs: "
-							+ deplist.substring(0, Math.max(deplist.length() - 2, 0)));
 					Debug.out(16, "Node " + n.getIdentifier() + " relevant for inputs: "
 							+ subgraphs.substring(0, Math.max(subgraphs.length() - 2, 0)));
 				}

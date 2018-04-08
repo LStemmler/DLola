@@ -21,7 +21,7 @@ public class Global {
     public static boolean displayDependencyGraph = true;
     public static boolean displayRelevantSubgraphs = true;
     public static boolean storeMultipleEquivalentSolutions = false;
-	public static int debugVerbosity = 14;		//0: Off, 1-3: Critical, 4-6 Error, 7-9 Warning, 10 Status, 11 Module, 12 Submodule, 13-15 Major Details, 16-20 Minor Details
+	public static int debugVerbosity = 16;		//0: Off, 1-3: Critical, 4-6 Error, 7-9 Warning, 10 Status, 11 Module, 12 Submodule, 13-15 Major Details, 16-20 Minor Details
 	public static DLolaParser parser;
 	public static List<String> ruleNames;
 	public static SystemModel systemModel;
@@ -30,6 +30,7 @@ public class Global {
 	public static Evaluator evaluator;
 	public static UI ui = new UI();
 	public static final int STAT_DELAY = Integer.MIN_VALUE;		// Delay value representing a statically calculable variable
+	public static final String newline = System.getProperty("line.separator");
 
 	private Global() {
 	}

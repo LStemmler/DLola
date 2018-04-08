@@ -20,13 +20,14 @@ public class Channel extends DLolaObject {
 	boolean reliable = true;		//Only from first node to others
 	ArrayList<Node> nodes = new ArrayList<Node>();
 	ArrayList<Edge> networkChannels = new ArrayList<Edge>();
+	String channelType;
 	
 	
 	public Channel(ParseTree channelDef, SymbolTable symbolTable) throws ParseException {
 
 		super(channelDef, symbolTable);
 		
-		String channelType = Trees.getNodeText(channelDef.getChild(0), Global.ruleNames);
+		channelType = Trees.getNodeText(channelDef.getChild(0), Global.ruleNames);
 		switch (channelType) {
 		case "udchannel": directed = true;
 		case "uchannel": reliable = false;
@@ -47,12 +48,11 @@ public class Channel extends DLolaObject {
 		delay = Integer.parseInt(channelDef.getChild(i++).getChild(0).getText());
 		
 		while (i < channelDef.getChildCount()) {
-			nodes.add((Node) symbolTable.getObject(channelDef.getChild(i++).getChild(0).getText()));
-		}
-
-		for (Node t: nodes) {
-			Debug.ensure(t != null, "Channel "+identifier + " between nonexisting nodes");
-			Debug.ensure(nodes.indexOf(t) == nodes.lastIndexOf(t), "Multiple occurences of node "+t.getIdentifier() + " at channel " +identifier);
+			String id = channelDef.getChild(i++).getChild(0).getText();
+			Node t = (Node) symbolTable.getObject(id);
+			Debug.ensure(t != null, "Channel "+identifier + " refers to nonexisting node " + id);
+			Debug.ensure(nodes.indexOf(t) == -1, "Multiple occurences of node "+t.getIdentifier() + " at channel " +identifier);
+			nodes.add(t);
 		}
 
 		

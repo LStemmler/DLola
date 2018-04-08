@@ -56,6 +56,7 @@ public class DLolaRunner {
 		Global.systemModel.generate();
 		
 		ExpressionMap.generateExpressions();
+		ExpressionMap.linkExpTreeObjects();
 
 		
 		

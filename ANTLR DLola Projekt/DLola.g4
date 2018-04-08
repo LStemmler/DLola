@@ -27,12 +27,11 @@ nodeStream : inputDef | outputDef | triggerDef ;
 
 inputDef : 'input' type identifier (COMMA identifier)* ;
 
-outputDef : 'output' type identifier DEFINE expression ;
+outputDef : ('output' | 'uoutput') type identifier DEFINE expression ;
 
 triggerDef : 'trigger' identifier (COMMA identifier)* ;
 
-channelDef : 'channel' identifier integer? integer identifier identifier | 'dchannel' identifier integer? integer identifier identifier;
-
+channelDef : ('channel' | 'dchannel' | 'uchannel' | 'udchannel') identifier integer? integer identifier identifier identifier*;
 
 type : 'int' | 'bool' ;
 
@@ -43,29 +42,29 @@ literal : 'true' | 'false' | integer ;
 expression : LPAREN expression RPAREN | restrExpr | expExpr | multExpr | subExpr | addExpr | comparExpr | equExpr | negExpr | andExpr | orExpr | impExpr | equivExpr;
 
 
-equivExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr | andExpr | orExpr | impExpr) (equivOp equivExpr)? ;
+equivExpr : (literal | identifier | ifExpr | restrExpr | shiftExpr | comparExpr | equExpr | negExpr | andExpr | orExpr | impExpr) (equivOp equivExpr)? ;
 
-impExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr | andExpr | orExpr) (impOp impExpr)? ;
+impExpr : (literal | identifier | ifExpr | restrExpr | shiftExpr | comparExpr | equExpr | negExpr | andExpr | orExpr) (impOp impExpr)? ;
 
-orExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr | andExpr) (orOp orExpr)?;
+orExpr : (literal | identifier | ifExpr | restrExpr | shiftExpr | comparExpr | equExpr | negExpr | andExpr) (orOp orExpr)?;
 
-andExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr | negExpr) (andOp andExpr)? ;
+andExpr : (literal | identifier | ifExpr | restrExpr | shiftExpr | comparExpr | equExpr | negExpr) (andOp andExpr)? ;
 
-negExpr : (negOp)? (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | comparExpr | equExpr) ;
+negExpr : (negOp)? (literal | identifier | ifExpr | restrExpr | shiftExpr | restrExpr | comparExpr | equExpr) ;
 
-equExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr) (equOp addExpr)? ;
+equExpr : (literal | identifier | ifExpr | restrExpr | shiftExpr | restrExpr | expExpr | multExpr | subExpr | addExpr) (equOp addExpr)? ;
 
-comparExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr | subExpr | addExpr) (compOp addExpr)? ;
+comparExpr : (literal | identifier | ifExpr | shiftExpr | restrExpr | expExpr | multExpr | subExpr | addExpr) (compOp addExpr)? ;
 
-addExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | subExpr | multExpr | subExpr) (addOp addExpr)? ;
+addExpr : (literal | identifier | ifExpr | shiftExpr | restrExpr | expExpr | subExpr | multExpr | subExpr) (addOp addExpr)? ;
 
-subExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr | multExpr) (subOp subExpr)? ;
+subExpr : (literal | identifier | ifExpr | shiftExpr | restrExpr | expExpr | multExpr) (subOp subExpr)? ;
 
-multExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN | expExpr) (multOp multExpr)? ;
+multExpr : (literal | identifier | ifExpr | shiftExpr | restrExpr | expExpr) (multOp multExpr)? ;
 
-expExpr : (literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN) (expOp expExpr)? ;
+expExpr : (literal | identifier | ifExpr | shiftExpr | restrExpr) (expOp expExpr)? ;
 
-restrExpr : literal | identifier | ifExpr | shiftExpr | LPAREN expression RPAREN ;
+restrExpr : LPAREN expression RPAREN | literal | identifier | ifExpr | shiftExpr ;
 
 equivOp : '<->' ;
 

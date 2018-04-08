@@ -1,0 +1,24 @@
+
+virtual int poo := bla + blub
+
+node A {
+	input int blub
+	output int foo := poo * blub
+	uoutput int b_out := b
+}
+
+node B {
+	input int bla
+}
+
+node C {
+	input int b
+	output bool joo := (foo =  bla[-2, 1] + b )
+	trigger joo
+}
+
+channel chan_AB 50 1 A B
+channel chan_BCinf 31 B C
+channel chan_BCfast 4 12 B C
+udchannel chan_CB 4 6 C B
+

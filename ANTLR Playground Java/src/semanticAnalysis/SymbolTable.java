@@ -85,18 +85,27 @@ public class SymbolTable {
 		for (ParseTree triggerDef : deflist.getTriggerList()) {
 			ArrayList<String> idList = DLolaObject.extractIdentifierList(triggerDef);
 			for (String id : idList) {
-				Output output = (Output) identifierList.get(id);
-				output.addTrigger();
-				Debug.out(15, "Registered trigger on output "+output.getIdentifier());
+				DLolaObject out = identifierList.get(id);
+				if (!(out instanceof Output)) {
+					throw new ParseException("Trigger cannot be defined on "+ out.getClass().getName()+ " \"" + out.getIdentifier() + "\"", 0);
+				}
+				((Output) out).addTrigger();
+				Debug.out(15, "Registered trigger on output "+out.getIdentifier());
 			}
 		}
-		
-		
-		
 	}
 
+	public boolean isUndefined(String identifier) {
+		 return identifierList.get(identifier) == null;
+	}
+	
+
 	public DLolaObject getObject(String identifier) {
-		return identifierList.get(identifier);
+		 DLolaObject obj = identifierList.get(identifier);
+		 if (obj == null) {
+			 Debug.error("Reference to undefined identifier "+identifier);
+		 }
+		 return obj;
 	}
 
 	public Map<String, DLolaObject> getIdentifierList() {

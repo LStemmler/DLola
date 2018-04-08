@@ -3,6 +3,7 @@ package routeGeneration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import dlolaExprTree.ExprSection;
@@ -18,7 +19,7 @@ public class PathTree {
 
 	
 	// Node provides subexTree with delay;
-	HashMap<Node, HashMap<ExprSection, Integer>> availableExprSections = new HashMap<>();
+	HashMap<Node, HashMap<ExprSection, AvailabilityTuple[]>> availableExprSections = new HashMap<>();
 	
 	HashMap<Task, Task> childMap = new HashMap<>();
 	HashMap<Task, Task> inverseChildMap = new HashMap<>();
@@ -34,12 +35,12 @@ public class PathTree {
 		for (Node n : Global.symtable.getNodeList()) {
 			for (ExprSection exprSec: ExpressionMap.getExprSections()) {
 				if (n.getInputList().containsAll(exprSec.getRequiredInputs())) {
-					setAvailableExprSectionDelay(n, exprSec, exprSec.getTimeShift());
+					setAvailableExprSectionDelay(n, exprSec, exprSec.getTimeShift(), false);
 					Debug.out(14, "Expression "+exprSec.getHead().toString() +" freely available at "+ n.getIdentifier() +" as all inputs are present" );
 				}
 			}
 			for (Output out : n.getOutputList()) {
-				Task task = new Task(n, ExpressionMap.getExprSection(out.getExpression()));
+				Task task = new Task(n, ExpressionMap.getExprSection(out.getExpression()), out.isEssential());
 				childMap.put(task, task);
 				inverseChildMap.put(task, task);
 				taskList.add(task);
@@ -51,7 +52,16 @@ public class PathTree {
 	@SuppressWarnings("unchecked")
 	private PathTree(PathTree pt) {
 		for (Node n: pt.availableExprSections.keySet()) {
-			HashMap<ExprSection, Integer> clone = (HashMap<ExprSection, Integer>) pt.getAvailableExprSections(n).clone();
+			
+			HashMap<ExprSection, AvailabilityTuple[]> toClone = (HashMap<ExprSection, AvailabilityTuple[]>) pt.getAvailableExprSections(n);
+			HashMap<ExprSection, AvailabilityTuple[]> clone = new HashMap<ExprSection, AvailabilityTuple[]>();
+			for (ExprSection expr:pt.getAvailableExprSections(n).keySet()) {
+				AvailabilityTuple[] availabilities = toClone.get(expr).clone();
+				for (int i=0; i<availabilities.length; i++) {
+					availabilities[i] = availabilities[i].clone();
+				}
+				clone.put(expr, availabilities);
+			}
 			availableExprSections.put(n, clone);
 		}
 		for (Channel c: pt.channelUsage.keySet()) {
@@ -84,18 +94,45 @@ public class PathTree {
 		return tclone;
 	}
 
-	HashMap<ExprSection, Integer> getAvailableExprSections(Node n) {
-		HashMap<ExprSection, Integer> available = availableExprSections.get(n);
+	HashMap<ExprSection, AvailabilityTuple[]> getAvailableExprSections(Node n) {
+		HashMap<ExprSection, AvailabilityTuple[]> available = availableExprSections.get(n);
 		if (available == null) {
-			available = new HashMap<ExprSection, Integer>();
+			available = new HashMap<ExprSection, AvailabilityTuple[]>();
 			availableExprSections.put(n, available);
 		}
 		return available;
 	}
 	
-	Integer getAvailableExprSectionDelay(Node n, ExprSection exprSec) {
-		HashMap<ExprSection, Integer> available = getAvailableExprSections(n);
-		return available.get(exprSec);
+	public Integer getAvailableExprSectionDelay(Node n, ExprSection exprSec, boolean unreliable) {
+		AvailabilityTuple[] available = getOrInsertAvailabilityTuples(n, exprSec);
+		if (unreliable) {
+			if (available[0].available && available[0].delay != null) {
+				if (available[1].available && available[1].delay != null) {
+					return Math.min(available[0].delay, available[1].delay);
+				} else {
+					return available[0].delay;
+				}
+			} else {
+				return available[1].delay;
+			}
+		} else {
+			return available[0].delay;
+		}
+	}
+
+	
+	boolean unreliableExprSectionPresent(Node n, ExprSection exprSec) {
+		AvailabilityTuple[] available = getOrInsertAvailabilityTuples(n, exprSec);
+		return available[1].available;
+	}
+	
+	boolean isAvailableExprSection(Node n, ExprSection exprSec, boolean unreliable) {
+		AvailabilityTuple[] available = getOrInsertAvailabilityTuples(n, exprSec);
+		if (unreliable) {
+			if (available[1].available) return true;
+		}
+		if (available[0].available) return true;
+		return false;
 	}
 	
 	public HashSet<Task> getChannelUsage(Channel c) {
@@ -107,13 +144,29 @@ public class PathTree {
 		return sent;
 	}
 	
-	void putAvailableExprSections(Node n, ExprSection exprSec) {
-		HashMap<ExprSection, Integer> available = availableExprSections.get(n);
+	void putAvailableExprSections(Node n, ExprSection exprSec, boolean unreliable) {
+		AvailabilityTuple[] available = getOrInsertAvailabilityTuples(n, exprSec);
+		if (unreliable) {
+			if (!available[1].available) available[1] = new AvailabilityTuple(true, null);
+		} else {
+			if (!available[0].available) available[0] = new AvailabilityTuple(true, null);
+		}
+	}
+	
+	AvailabilityTuple[] getOrInsertAvailabilityTuples(Node n, ExprSection exprSec) {
+		HashMap<ExprSection, AvailabilityTuple[]> available = availableExprSections.get(n);
 		if (available == null) {
-			available = new HashMap<ExprSection, Integer>();
+			available = new HashMap<ExprSection, AvailabilityTuple[]>();
 			availableExprSections.put(n, available);
 		}
-		if (available.get(exprSec) == null) available.put(exprSec, null);
+		AvailabilityTuple[] tuples = available.get(exprSec);
+		if (tuples == null) {
+			tuples = new AvailabilityTuple[2];	//TODO 2 for reliable/unreliable, may increase for more options
+			tuples[0] = new AvailabilityTuple(false, null);
+			tuples[1] = new AvailabilityTuple(false, null);
+			available.put(exprSec, tuples);
+		}
+		return tuples;
 	}
 
 	void putChannelUser(Channel c, Task t) {
@@ -127,14 +180,21 @@ public class PathTree {
 	
 
 	// Fails if worse than currently available delay, scrapping entire pathTree
-	boolean setAvailableExprSectionDelay(Node n, ExprSection subex, Integer delay) {
-		HashMap<ExprSection, Integer> available = getAvailableExprSections(n);
-		if (available.get(subex) != null) {
-			if (available.get(subex) < delay) {
+	boolean setAvailableExprSectionDelay(Node n, ExprSection exprSec, Integer delay, boolean unreliable) {
+		AvailabilityTuple[] available = getOrInsertAvailabilityTuples(n, exprSec);
+		if (unreliable) {
+			if (available[1].available && available[1].delay != null && available[1].delay < delay) {
 				return false;
 			}
 		}
-		available.put(subex, delay);
+		if (available[0].available && available[0].delay != null && available[0].delay < delay) {
+			return false;
+		}
+		if (unreliable) {
+			available[1] = new AvailabilityTuple(true, delay);
+		} else {
+			available[0] = new AvailabilityTuple(true, delay);
+		}
 		return true;
 	}
 	
@@ -184,5 +244,34 @@ public class PathTree {
 		}
 		return true;
 	}
+	
+	public int solvedTaskSize () {
+		return solvedTasks.size();
+	}
+	
+	
+	class AvailabilityTuple { 
+		  public final boolean available; 
+		  public final Integer delay; 
+		  AvailabilityTuple(boolean available, Integer delay) { 
+		    this.available = available;
+		    this.delay = delay;
+		  }
+		  protected AvailabilityTuple clone() {
+			  if (delay != null) {
+				  final Integer d = new Integer(delay);
+				  return new AvailabilityTuple(available, d);
+			  } else {
+				  return new AvailabilityTuple(available, null);
+			  }
+		  }
+		  boolean available() {
+			  return available;
+		  }
+		  Integer getDelay() {
+			  return delay;
+		  }
+		  
+		} 
 	
 }
