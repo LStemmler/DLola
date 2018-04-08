@@ -15,13 +15,13 @@ public class Global {
     
     public static long startTime = System.currentTimeMillis();
 
-    
-    public static boolean displayAST = true;
-    public static boolean displayNetworkGraph = true;
-    public static boolean displayDependencyGraph = true;
-    public static boolean displayRelevantSubgraphs = true;
-    public static boolean storeMultipleEquivalentSolutions = false;
-	public static int debugVerbosity = 16;		//0: Off, 1-3: Critical, 4-6 Error, 7-9 Warning, 10 Status, 11 Module, 12 Submodule, 13-15 Major Details, 16-20 Minor Details
+    public static String filePath = "./src/file1.dlola";		// Path to the file to be evaluated
+    public static boolean displayAST = true;						// Whether the syntax tree should be shown
+    public static boolean displayNetworkGraph = true;				// Whether the network graph should be shown
+    public static boolean displayDependencyGraph = true;			// Whether the dependency graph should be shown
+    public static boolean displayRelevantSubgraphs = false;			// Whether the relevant subgraphs should be shown
+    public static boolean storeMultipleEquivalentSolutions = false;	// Whether more than one solution in each Pareto class should be stored. Will cause high memory usage
+	public static int debugVerbosity = 14;		//0: Off, 1-3: Critical, 4-6 Error, 7-9 Warning, 10 Status, 11 Module, 12 Submodule, 13-15 Major Details, 16-20 Minor Details
 	public static DLolaParser parser;
 	public static List<String> ruleNames;
 	public static SystemModel systemModel;
@@ -30,7 +30,7 @@ public class Global {
 	public static Evaluator evaluator;
 	public static UI ui = new UI();
 	public static final int STAT_DELAY = Integer.MIN_VALUE;		// Delay value representing a statically calculable variable
-	public static final String newline = System.getProperty("line.separator");
+	public static final String newline = System.getProperty("line.separator");	// OS-independent line separator character
 
 	private Global() {
 	}

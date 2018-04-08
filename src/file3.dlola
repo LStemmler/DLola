@@ -1,4 +1,3 @@
-const int bli := 5
 const bool boo := true
 virtual int poo := bla + blub
 
@@ -19,12 +18,12 @@ node C {
 	input bool a, c, d
 	output int e := if c<->d {f} else {1}
 	output bool joo := (foo =  bla[-2, 1] + b )
-	output bool roo := bli | joo[-1, false]
+	output bool roo := moo | c[-1, false]
 	output int f := if a {6} else {0}
 	trigger joo, roo
 }
 
-channel chan_AB 5 1 A B
-channel chan_AC 1 3 A C
-dchannel chan_AC2 3 1 A C
-dchannel chan_CA 5 1 C A
+channel chan_AB 12 6 A B
+channel chan_AC 8 3 A C
+dchannel chan_AC2 3 5 A C
+dchannel chan_CA 5 0 C A

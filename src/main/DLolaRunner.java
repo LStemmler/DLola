@@ -26,7 +26,7 @@ public class DLolaRunner {
 		
 		String str;
 		
-		try(BufferedReader br = new BufferedReader(new FileReader("C:\\Users\\blur\\git\\Bachelorprojekt\\ANTLR Playground Java\\src\\file.dlola"))) {
+		try(BufferedReader br = new BufferedReader(new FileReader(Global.filePath))) {
 		    StringBuilder sb = new StringBuilder();
 		    String line = br.readLine();
 		    

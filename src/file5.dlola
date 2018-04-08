@@ -18,7 +18,7 @@ node B {
 node C {
 	input int b
 	input bool a, c, d
-	output int e := if c<->d {f} else {b[-4, false]}
+	output int e := if c<->d {f} else {b[-4, 2]}
 	output bool joo := (foo =  bla[-2, 1] + b )
 	output int f := if a {6} else {0}
 	trigger joo

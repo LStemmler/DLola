@@ -1,5 +1,16 @@
-node A {
-	output int poo := boo * choo
-	output int moo := boo * choo
+const int limit := 15
 
+node NodeA {
+input int streamA
+output bool exceedA := sum > limit
+trigger exceedA
 }
+
+node NodeB {
+input int streamB
+output bool exceedB := sum > 20
+output int sum := streamA + streamB
+}
+
+channel smallChannel 5 3 NodeA NodeB
+dchannel slowChannel 10 NodeA NodeB
